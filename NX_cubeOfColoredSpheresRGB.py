@@ -1,10 +1,12 @@
 # NX 2412
 
+
 import math
 import NXOpen
 import NXOpen.Features
 import NXOpen.GeometricUtilities
 import NXOpen.UF
+import time
 
 
 def main():
@@ -16,8 +18,14 @@ def main():
     theUI = NXOpen.UI.GetUI()
     theNxMessageBox = theUI.NXMessageBox
 
-    sphereSize = 50
-    sphereStep = 200
+    delete_all(theSession, workPart)
+
+    # sphereStep should be a positive integer in range from 1 to 255
+    sphereStep = 25
+    # sphereSize, preferrably, should be a positive integer less than sphereStep
+    sphereSize = 10
+
+    timeStart = time.time()
 
     create_spheres(workPart, sphereSize, sphereStep)
 
@@ -36,6 +44,13 @@ def main():
         NXOpen.Session.MarkVisibility.Visible, "Update Model"
     )
     theSession.UpdateManager.UpdateModel(workPart, markId1)
+
+    elapsedTime = time.time() - timeStart
+    theNxMessageBox.Show(
+        "How many seconds have passed:",
+        NXOpen.NXMessageBox.DialogType.Information,
+        str(elapsedTime),
+    )
 
 
 def create_spheres(workPart, sphereSize, sphereStep):
@@ -86,6 +101,19 @@ def change_body_color(theSession, myColorIndex, myBody):
 
     displayModification1.Apply(myObjects)
     displayModification1.Dispose()
+
+
+def delete_all(theSession, workPart):
+
+    theSession.UpdateManager.ClearErrorList()
+
+    objectsToDelete = []
+    for myFeature in workPart.Features:
+        objectsToDelete.append(myFeature)
+
+    deleteObjects = theSession.UpdateManager.AddObjectsToDeleteList(objectsToDelete)
+    id1 = theSession.NewestVisibleUndoMark
+    nErrs2 = theSession.UpdateManager.DoUpdate(id1)
 
 
 if __name__ == "__main__":
